@@ -1,5 +1,5 @@
 import { ChangeEvent, useEffect, useState } from 'react';
-import { ApiResponse, PhotoSize } from './types/types';
+import { ApiResponse } from './types/types';
 
 function App() {
   const [loading, setLoading] = useState<boolean>(false);
@@ -25,12 +25,12 @@ function App() {
 
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
-    const file = e.target.files?.[0];
-    if (!file) return;
-    await sendPhoto(file);
+    const files = Array.from(e.target!.files!);
+    const uploads = files.map((file) => sendPhoto(file));
+    Promise.all(uploads);
   };
 
-  async function sendPhoto(file: File) {
+  async function sendPhoto(file: File): Promise<void> {
     const formData = new FormData();
     formData.append('chat_id', chatId!);
     formData.append('photo', file);
@@ -39,7 +39,6 @@ function App() {
       body: formData,
     });
     const result = await response.json();
-    console.log(result.status);
   }
 
   async function getFileUrl(file_id: string): Promise<string> {
@@ -57,18 +56,20 @@ function App() {
       const photos = data.result
         .filter((item) => item.channel_post)
         .map((item) => item.channel_post!.photo)
-        .filter((p): p is PhotoSize[] => Boolean(p))
-        .map((p) => p.at(-1))
-        .filter((p): p is PhotoSize => Boolean(p));
+        // .map((p) => p!.at(-1))
+        .flatMap((item) => item!);
+      // .filter((p): p is PhotoSize[] => Boolean(p))
+      // .filter((p): p is PhotoSize => Boolean(p));
 
       const fileIds = photos.map((p) => p.file_id);
-      const urls: string[] = [];
-      for (let i = 0; i < fileIds.length; i++) {
-        const element = fileIds[i];
-        const url = await getFileUrl(element!);
-        urls.push(url);
-      }
-      // const urls = await Promise.all(fileIds.map((id) => getFileUrl(id)));
+      // const urls: string[] = [];
+      // for (let i = 0; i < fileIds.length; i++) {
+      //   const element = fileIds[i];
+      //   const url = await getFileUrl(element!);
+
+      //   urls.push(url);
+      // }
+      const urls = await Promise.all(fileIds.map((id) => getFileUrl(id)));
 
       setImages(urls);
     } catch (error) {
@@ -96,7 +97,7 @@ function App() {
       <button onClick={handleSubmit} disabled={loading}>
         {loading ? 'Sending...' : 'Send Post'}
       </button>
-      <input onChange={handleFileChange} type="file" />
+      <input onChange={handleFileChange} type="file" multiple />
     </div>
   );
 }
