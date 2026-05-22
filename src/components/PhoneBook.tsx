@@ -24,8 +24,8 @@ const PhoneBook = () => {
 
   const handleSaveUser = (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (formPhone.firstName !== '' || formPhone.lastName !== '' || formPhone.number !== '') {
-      const newContact = { ...formPhone };
+    if (formPhone.firstName !== '' && formPhone.lastName !== '' && formPhone.number !== '') {
+      const newContact = { ...formPhone, id: Math.random().toLocaleString() };
       const updatedList = [...list, newContact];
       setList(updatedList);
       localStorage.setItem('myContacts', JSON.stringify(updatedList));
@@ -34,10 +34,11 @@ const PhoneBook = () => {
   };
 
   const handleDelete = (id: string) => {
-    const filterdList = list.filter((item) => item.id !== id);
-    localStorage.removeItem('myContacts');
-    const copy = [...filterdList];
-    setList(copy);
+    const filteredList = list.filter((item) => item.id !== id);
+
+    setList(filteredList);
+
+    localStorage.setItem('myContacts', JSON.stringify(filteredList));
   };
   return (
     <form onSubmit={handleSaveUser}>
